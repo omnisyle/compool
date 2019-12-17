@@ -1,21 +1,47 @@
 package main
 
-type Object interface {
-  Close()
+import (
+	"fmt"
+	"math/rand"
+	"time"
+)
+
+type FakeObj struct {
+	id int
 }
 
-type Factory func() (Object, error)
+func (f *FakeObj) Close() {}
 
-type ObjectPool struct {
-  capacity int64
-  objects  chan Object
-  factory  Factory
+func factory() (Object, error) {
+	src := rand.NewSource(time.Now().Unix())
+	ran := rand.New(src)
+	return &FakeObj{
+		id: ran.Int(),
+	}, nil
 }
 
-func NewObjectPool(factory Factory, capacity int) *ObjectPool {
-  return &ObjectPool{
-    capacity: int64(capacity),
-    factory:  factory,
-    objects:  make(chan Object, capacity),
-  }
+func main() {
+	objPool := NewObjectPool(factory, 5)
+	obj, _ := factory()
+	err := objPool.Put(obj)
+
+	if err != nil {
+		panic(err)
+	}
+
+	obj, err = objPool.Get()
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%+v\n", obj)
+
+	obj, err = objPool.Get()
+
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("%+v\n", obj)
 }
